@@ -24,10 +24,11 @@ RUN \
     openssl \
     nano \
     sed && \
-    # Even though we install full pkill (via the procps package, which we do for
-    # "-U" support in our tests), the /usr/bin version that symlinks BusyBox's
-    # more limited pkill version takes precedence. So manually remove this
-    # BusyBox symlink to the full pkill version is used.
+
+# Even though we install full pkill (via the procps package, which we do for
+# "-U" support in our tests), the /usr/bin version that symlinks BusyBox's
+# more limited pkill version takes precedence. So manually remove this
+# BusyBox symlink to the full pkill version is used.
     if [ -L /usr/bin/pkill ]; then rm /usr/bin/pkill; fi && \
 
     luarocks install lua-resty-http && \
@@ -42,10 +43,13 @@ RUN \
       -out /usr/local/openresty/nginx/ssl/resty-auto-ssl-fallback.crt && \
 
     chown -R nginx:nginx /usr/local/openresty/nginx/ssl && \
-    mkdir -p /usr/local/openresty/nginx/conf.d && \
-    ln -s /usr/local/openresty/nginx /etc && \
-    ln -s /usr/local/openresty/nginx/logs/ /var/log/nginx \
-    chown -R nginx:nginx /usr/local/openresty/nginx/logs/
+    chown -R nginx:nginx /usr/local/openresty/nginx/logs/ && \
+
+# link for ease of refs in conf file
+    ln -s /usr/local/openresty/nginx/ /etc/nginx && \
+    ln -s /usr/local/openresty/nginx/logs/ /var/log/nginx
+
+COPY rootfs/. /
 
 EXPOSE 80 443
 
