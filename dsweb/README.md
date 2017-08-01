@@ -23,6 +23,6 @@ for backups:
 env AWS_DEFAULT_REGION=us-west-2;
 env AWS_ACCESS_KEY_ID=xxx;
 env AWS_SECRET_ACCESS_KEY=yyy;
-env AWS_BACKUP_PATH=bucket-name/folder;
+env AWS_PATH=bucket-name/folder;
 ```
 

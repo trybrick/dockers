@@ -1,18 +1,20 @@
-FROM niiknow/openresty:0.1.0
+FROM niiknow/openresty:0.1.2
 
 MAINTAINER noogen <friends@niiknow.org>
 
-ENV DS_API="clientapi.brickinc.net" \
+ENV DS_API="clientapi-stg.brickinc.net" \
     DS_SEO="ds-seo.brickinc.net" \
-    DS_CONTENT="cdn.brickinc.net" \
-    DS_RESOLVER="8.8.8.8 4.4.4.4;"
+    DS_CONTENT="cdn-stg.brickinc.net" \
+    DS_RESOLVER="8.8.8.8 4.4.4.4" \
+    DS_TTL="20m" \
+    AWS_DEFAULT_REGION="us-west-2"
 
 ARG LUA_RESTY_AUTO_SSL_VERSION="0.11.0"
 
 RUN \
 
 # Make info file about this build
-    printf "Build of brickinc/dsweb, date: %s\n"  `date -u +"%Y-%m-%dT%H:%M:%SZ"` >> /etc/BUILDS/dsweb && \
+    printf "Build of brickinc/dsweb, date: %s\n"  `date -u +"%Y-%m-%dT%H:%M:%SZ"` >> /etc/BUILDS/zz-dsweb && \
 
 # begin
     apk add --no-cache --virtual runtime \
@@ -23,7 +25,12 @@ RUN \
     grep \
     openssl \
     nano \
+    less \
+    python \
+    py-pip \
     sed && \
+
+    pip install awscli && \
 
 # Even though we install full pkill (via the procps package, which we do for
 # "-U" support in our tests), the /usr/bin version that symlinks BusyBox's
@@ -46,11 +53,14 @@ RUN \
     chown -R nginx:nginx /usr/local/openresty/nginx/logs/ && \
 
 # link for ease of refs in conf file
-    ln -s /usr/local/openresty/nginx/ /etc/nginx && \
-    ln -s /usr/local/openresty/nginx/logs/ /var/log/nginx
+    ln -s /usr/local/openresty/nginx/logs/ /var/log/nginx && \
+
+    apk --purge -v del py-pip && \
+    rm -rf /var/cache/apk/*
 
 COPY rootfs/. /
 
 EXPOSE 80 443
 
-VOLUME ["/usr/local/openresty/nginx"]
+# mount to persist configuration, ssl, and purge cache
+VOLUME ["/usr/local/openresty/nginx", "/var/cache/nginx"]
