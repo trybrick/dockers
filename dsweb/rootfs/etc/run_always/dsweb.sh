@@ -34,7 +34,7 @@ if [ ! -f /usr/local/openresty/nginx/conf/nginx.conf ]; then
 			echo "[i] DSWEB restoring from s3: $AWS_PATH"
 
 			# merge with conf-bak
-			aws s3 sync "s3://$AWS_PATH/" "/usr/local/openresty/nginx/conf-bak/" --exclude "*logs/*"
+			/usr/bin/aws s3 sync "s3://$AWS_PATH/" "/usr/local/openresty/nginx/conf-bak/" --exclude "s3.restore"
 		fi
 
 		rm -f /usr/local/openresty/nginx/conf/s3.restore
