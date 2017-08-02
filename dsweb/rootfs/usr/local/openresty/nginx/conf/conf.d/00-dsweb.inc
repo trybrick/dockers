@@ -1,4 +1,28 @@
 # misc
+set $gdsseo     "DS_SEO";
+set $gdsapi     "DS_API";
+set $gdscontent "DS_CONTENT";
+set $isbrickinc 0;
+set $genv       ".";
+
+# if host is brickinc
+if ($host ~* (.*)\.brickinc\.net$ ) {
+    set $isbrickinc  1;
+    set $genv        $1;
+
+    set_by_lua $genv '
+        local genv = string.sub(ngx.var.genv, -3)
+        local regex = "(dev|bta|tst|uat|stg)"
+        local m = ngx.re.match(genv, regex)
+        
+        if m then
+            ngx.var.gdsapi = string.format("clientapi-%s.brickinc.net", genv)
+            ngx.var.gdscontent = string.format("cdn-%s.brickinc.net", genv)
+        end
+
+        return genv
+    ';
+}
 
 location /healthcheck {
     default_type text/plain;
@@ -30,19 +54,12 @@ location / {
         set $prerender 0;
     }
 
-    if ($prerender = 1) {
-        # setting prerender as a variable forces DNS resolution since nginx caches IPs and doesnt play well with load balancing
-        set $prerender "DS_SEO";
-        rewrite .* /$scheme://$host$request_uri? break;
-        proxy_pass http://$prerender:4001;
-    }
-
     set_by_lua $today 'return ngx.today()';
-    set $myapi "DS_API";
+    set $myapi "$gdsapi";
     set $myurl "http://$myapi/api/v1/content/getpage/?cb=$today&scheme=$scheme&host=$host&request_uri=$request_uri";
 
     if ($prerender = 1) {
-        set $myapi "DS_SEO";
+        set $myapi "$gdsseo";
         set $myurl "http://$myapi:4001/$scheme://$host$request_uri?";
     }
 
@@ -66,7 +83,7 @@ location ~ ^/asset/(.*) {
 
     include /usr/local/openresty/nginx/conf/conf.d/proxy-hide-headers.inc;
     
-    set $myurl "DS_CONTENT";
+    set $myurl "$gdscontent";
     proxy_set_header Host $myurl;
     proxy_pass http://$myurl;
 }
@@ -76,7 +93,7 @@ location ~ ^/script/(.*) {
     
     include /usr/local/openresty/nginx/conf/conf.d/proxy-hide-headers.inc;
     
-    set $myurl "DS_CONTENT";
+    set $myurl "$gdscontent";
     
     proxy_set_header Host $myurl;
     proxy_pass http://$myurl;
@@ -87,7 +104,7 @@ location ~ ^/proxy/(.*) {
     proxy_hide_header           "X-AspNet-Version";
     proxy_hide_header           "X-Powered-By";
 
-    set $myurl "DS_API";
+    set $myurl "$gdsapi";
 
     proxy_set_header   Host $myurl;
     proxy_pass         http://$myurl/api/v1/$1$is_args$args;
