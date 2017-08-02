@@ -7,6 +7,11 @@ location /healthcheck {
 
 location / {
     include /usr/local/openresty/nginx/conf/conf.d/proxy-hide-headers.inc;
+    include /usr/local/openresty/nginx/conf/conf.d/00-dsweb-www.inc;
+
+    if ($http_referer !~* "(webvisor\.com|trigs\.com)") {
+        add_header X-Frame-Options "SAMEORIGIN";
+    }
 
     set $prerender 0;
     if ($http_user_agent ~* "googlebot|yahoo|bingbot|yandex|yeti|yodaobot|gigabot|ia_archiver|baiduspider|twitterbot|facebookexternalhit|rogerbot|linkedinbot|embedly|quora link preview|showyoubot|outbrain|pinterest|slackbot|vkShare|W3C_Validator") {
@@ -32,14 +37,20 @@ location / {
         proxy_pass http://$prerender:4001;
     }
 
-    if ($http_referer !~* "(webvisor\.com|trigs\.com)") {
-        add_header X-Frame-Options "SAMEORIGIN";
+    set_by_lua $today 'return ngx.today()';
+    set $myapi "DS_API";
+    set $myurl "http://$myapi/api/v1/content/getpage/?cb=$today&scheme=$scheme&host=$host&request_uri=$request_uri";
+
+    if ($prerender = 1) {
+        set $myapi "DS_SEO";
+        set $myurl "http://$myapi:4001/$scheme://$host$request_uri?";
     }
 
-    set $myapi "DS_API";
-    set $myurl "http://$myapi/api/v1/content/getpage/?host=$host&request_uri=$request_uri";
-    proxy_set_header Host $myapi;
-    proxy_pass $myurl;
+    proxy_cache_valid  DS_TTL;
+    proxy_set_header   Host $myapi;
+    proxy_cache_bypass $prerender;
+    proxy_no_cache     $prerender;
+    proxy_pass         $myurl;
 }
 
 location = /50x.html {
@@ -51,15 +62,22 @@ location = /404.html {
 }
 
 location ~ ^/asset/(.*) {
+    proxy_cache_valid  DS_TTL;
+
     include /usr/local/openresty/nginx/conf/conf.d/proxy-hide-headers.inc;
+    
     set $myurl "DS_CONTENT";
     proxy_set_header Host $myurl;
     proxy_pass http://$myurl;
 }
 
 location ~ ^/script/(.*) {
+    proxy_cache_valid  DS_TTL;
+    
     include /usr/local/openresty/nginx/conf/conf.d/proxy-hide-headers.inc;
+    
     set $myurl "DS_CONTENT";
+    
     proxy_set_header Host $myurl;
     proxy_pass http://$myurl;
 }
