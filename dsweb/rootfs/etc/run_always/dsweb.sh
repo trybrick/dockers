@@ -10,16 +10,24 @@ rm -rf /var/cache/nginx/site/*
 
 chown -R nginx:nginx /var/cache/nginx
 
+# handle each env variables
+cd /usr/local/openresty/nginx/conf
+sed -i "s/ DS_RESOLVER;/ $DS_RESOLVER;/g" nginx.conf
+sed -i "s/ DS_TTL;/ $DS_TTL;/g" nginx.conf
+sed -i "s/DS_CONTENT/$DS_CONTENT/g" conf.d/zz-dsweb.inc
+sed -i "s/DS_API/$DS_API/g" conf.d/zz-dsweb.inc
+sed -i "s/DS_SEO/$DS_SEO/g" conf.d/zz-dsweb.inc
+
+cd /usr/local/openresty/nginx/conf-bak
+sed -i "s/ DS_RESOLVER;/ $DS_RESOLVER;/g" nginx.conf
+sed -i "s/ DS_TTL;/ $DS_TTL;/g" nginx.conf
+sed -i "s/DS_CONTENT/$DS_CONTENT/g" conf.d/zz-dsweb.inc
+sed -i "s/DS_API/$DS_API/g" conf.d/zz-dsweb.inc
+sed -i "s/DS_SEO/$DS_SEO/g" conf.d/zz-dsweb.inc
+
 # restore backup folder
 if [ ! -f /usr/local/openresty/nginx/conf/nginx.conf ]; then
-	rsync -a /usr/local/openresty/nginx/conf-bak/ /usr/local/openresty/nginx/conf/
-
-	# handle each env variables
-	sed -i "s/ DS_RESOLVER;/ $DS_RESOLVER;/g" /usr/local/openresty/nginx/conf/nginx.conf
-	sed -i "s/DS_TTL/$DS_TTL/g" /usr/local/openresty/nginx/conf/nginx.conf
-	sed -i "s/DS_CONTENT/$DS_CONTENT/g" /usr/local/openresty/nginx/conf/conf.d/zz-dsweb.inc
-	sed -i "s/DS_API/$DS_API/g" /usr/local/openresty/nginx/conf/conf.d/zz-dsweb.inc
-	sed -i "s/DS_SEO/$DS_SEO/g" /usr/local/openresty/nginx/conf/conf.d/zz-dsweb.inc
+	rsync -a /usr/local/openresty/nginx/conf-bak/ /usr/local/openresty/nginx/conf
 
 	# if folder contain instruction to restore from s3 then
 	if [ -f /usr/local/openresty/nginx/conf/s3.restore ]; then

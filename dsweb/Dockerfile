@@ -12,11 +12,10 @@ ENV DS_API="clientapi-stg.brickinc.net" \
 ARG LUA_RESTY_AUTO_SSL_VERSION="0.11.0"
 
 RUN \
-
-# Make info file about this build
+  # Make info file about this build
     printf "Build of brickinc/dsweb, date: %s\n"  `date -u +"%Y-%m-%dT%H:%M:%SZ"` >> /etc/BUILDS/zz-dsweb && \
 
-# begin
+  # begin
     apk add --no-cache --virtual runtime \
     bash \
     coreutils \
@@ -33,10 +32,10 @@ RUN \
 
     pip install awscli && \
 
-# Even though we install full pkill (via the procps package, which we do for
-# "-U" support in our tests), the /usr/bin version that symlinks BusyBox's
-# more limited pkill version takes precedence. So manually remove this
-# BusyBox symlink to the full pkill version is used.
+  # Even though we install full pkill (via the procps package, which we do for
+  # "-U" support in our tests), the /usr/bin version that symlinks BusyBox's
+  # more limited pkill version takes precedence. So manually remove this
+  # BusyBox symlink to the full pkill version is used.
     if [ -L /usr/bin/pkill ]; then rm /usr/bin/pkill; fi && \
 
     luarocks install lua-resty-http && \
@@ -53,17 +52,18 @@ RUN \
     chown -R nginx:nginx /usr/local/openresty/nginx/conf/ssl && \
     chown -R nginx:nginx /usr/local/openresty/nginx/logs/ && \
 
-# link for ease of refs in conf file
+  # link for ease of refs in conf file
     ln -s /usr/local/openresty/nginx/logs/ /var/log/nginx && \
 
     apk --purge -v del py-pip && \
 
-# backup the conf folder 
-    mkdir -p /usr/local/openresty/nginx/conf-bak && \
-    rsync -a /usr/local/openresty/nginx/conf /usr/local/openresty/nginx/conf-bak && \
     rm -rf /var/cache/apk/*
 
 COPY rootfs/. /
+
+RUN \
+  # backup the conf folder 
+    rsync -a /usr/local/openresty/nginx/conf/ /usr/local/openresty/nginx/conf-bak
 
 EXPOSE 80 443
 
