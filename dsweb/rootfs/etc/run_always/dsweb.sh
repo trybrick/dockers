@@ -14,16 +14,16 @@ chown -R nginx:nginx /var/cache/nginx
 cd /usr/local/openresty/nginx/conf
 sed -i "s/ DS_RESOLVER;/ $DS_RESOLVER;/g" nginx.conf
 sed -i "s/ DS_TTL;/ $DS_TTL;/g" nginx.conf
-sed -i "s/DS_CONTENT/$DS_CONTENT/g" conf.d/zz-dsweb.inc
-sed -i "s/DS_API/$DS_API/g" conf.d/zz-dsweb.inc
-sed -i "s/DS_SEO/$DS_SEO/g" conf.d/zz-dsweb.inc
+sed -i "s/DS_CONTENT/$DS_CONTENT/g" conf.d/00-dsweb.inc
+sed -i "s/DS_API/$DS_API/g" conf.d/00-dsweb.inc
+sed -i "s/DS_SEO/$DS_SEO/g" conf.d/00-dsweb.inc
 
 cd /usr/local/openresty/nginx/conf-bak
 sed -i "s/ DS_RESOLVER;/ $DS_RESOLVER;/g" nginx.conf
 sed -i "s/ DS_TTL;/ $DS_TTL;/g" nginx.conf
-sed -i "s/DS_CONTENT/$DS_CONTENT/g" conf.d/zz-dsweb.inc
-sed -i "s/DS_API/$DS_API/g" conf.d/zz-dsweb.inc
-sed -i "s/DS_SEO/$DS_SEO/g" conf.d/zz-dsweb.inc
+sed -i "s/DS_CONTENT/$DS_CONTENT/g" conf.d/00-dsweb.inc
+sed -i "s/DS_API/$DS_API/g" conf.d/00-dsweb.inc
+sed -i "s/DS_SEO/$DS_SEO/g" conf.d/00-dsweb.inc
 
 # restore backup folder
 if [ ! -f /usr/local/openresty/nginx/conf/nginx.conf ]; then
