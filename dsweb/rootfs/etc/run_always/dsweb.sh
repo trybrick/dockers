@@ -33,7 +33,7 @@ if [ ! -f /usr/local/openresty/nginx/conf/nginx.conf ]; then
 	if [ -f /usr/local/openresty/nginx/conf/s3.restore ]; then
 		if [[ "$AWS_PATH" != '' ]]; then
 			echo "[i] DSWEB restoring from s3: $AWS_PATH"
-			aws s3 sync "s3://$AWS_PATH/" "/usr/local/openresty/conf/" --exclude "*logs/*"
+			aws s3 sync "s3://$AWS_PATH/" "/usr/local/openresty/nginx/conf/" --exclude "*logs/*"
 			
 			rm -f /usr/local/openresty/nginx/conf/s3.restore
 		fi
