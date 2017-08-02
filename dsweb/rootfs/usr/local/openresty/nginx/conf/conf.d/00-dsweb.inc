@@ -1,15 +1,9 @@
 # misc
 
 location /healthcheck {
-  	default_type text/plain;
+    default_type text/plain;
 	return 200 "OK";
 }
-
-error_page  404              /404.html;
-
-# redirect server error pages to the static page /50x.html
-#
-error_page  500 502 503 504  /50x.html;
 
 location / {
     include /usr/local/openresty/nginx/conf/conf.d/proxy-hide-headers.inc;
