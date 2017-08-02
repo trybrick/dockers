@@ -1,2 +1,2 @@
 # dockers
-for apps
+collection of custom Apps
