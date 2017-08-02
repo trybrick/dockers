@@ -1,7 +1,7 @@
 # HTTPS server
 server {
     listen 80;
-	listen 443;
+	listen 443 ssl;
 	server_name custom.com www.custom.com;
 
 	ssl_certificate /usr/local/openresty/nginx/conf/conf.d/custom.com.crt;
