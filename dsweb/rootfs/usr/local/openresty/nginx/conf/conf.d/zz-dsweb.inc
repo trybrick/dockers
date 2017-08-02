@@ -12,7 +12,7 @@ error_page  404              /404.html;
 error_page  500 502 503 504  /50x.html;
 
 location / {
-    include /usr/local/openresty/nginx/conf.d/proxy-hide-headers.inc;
+    include /usr/local/openresty/nginx/conf/conf.d/proxy-hide-headers.inc;
 
     set $prerender 0;
     if ($http_user_agent ~* "googlebot|yahoo|bingbot|yandex|yeti|yodaobot|gigabot|ia_archiver|baiduspider|twitterbot|facebookexternalhit|rogerbot|linkedinbot|embedly|quora link preview|showyoubot|outbrain|pinterest|slackbot|vkShare|W3C_Validator") {
@@ -57,14 +57,14 @@ location = /404.html {
 }
 
 location ~ ^/asset/(.*) {
-    include /usr/local/openresty/nginx/conf.d/proxy-hide-headers.inc;
+    include /usr/local/openresty/nginx/conf/conf.d/proxy-hide-headers.inc;
     set $myurl "DS_CONTENT";
     proxy_set_header Host $myurl;
     proxy_pass http://$myurl;
 }
 
 location ~ ^/script/(.*) {
-    include /usr/local/openresty/nginx/conf.d/proxy-hide-headers.inc;
+    include /usr/local/openresty/nginx/conf/conf.d/proxy-hide-headers.inc;
     set $myurl "DS_CONTENT";
     proxy_set_header Host $myurl;
     proxy_pass http://$myurl;

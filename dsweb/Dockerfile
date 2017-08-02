@@ -1,4 +1,4 @@
-FROM niiknow/openresty:0.1.2
+FROM niiknow/openresty:0.1.3
 
 MAINTAINER noogen <friends@niiknow.org>
 
@@ -28,6 +28,7 @@ RUN \
     less \
     python \
     py-pip \
+    rsync \
     sed && \
 
     pip install awscli && \
@@ -43,19 +44,23 @@ RUN \
 
     addgroup -S nginx && \
     adduser -D -S -h /var/cache/nginx -s /sbin/nologin -G nginx nginx && \
-    mkdir -p /usr/local/openresty/nginx/ssl && \
+    mkdir -p /usr/local/openresty/nginx/conf/ssl && \
     openssl req -new -newkey rsa:2048 -days 3650 -nodes -x509 \
       -subj '/CN=sni-support-required-for-valid-ssl' \
-      -keyout /usr/local/openresty/nginx/ssl/resty-auto-ssl-fallback.key \
-      -out /usr/local/openresty/nginx/ssl/resty-auto-ssl-fallback.crt && \
+      -keyout /usr/local/openresty/nginx/conf/ssl/resty-auto-ssl-fallback.key \
+      -out /usr/local/openresty/nginx/conf/ssl/resty-auto-ssl-fallback.crt && \
 
-    chown -R nginx:nginx /usr/local/openresty/nginx/ssl && \
+    chown -R nginx:nginx /usr/local/openresty/nginx/conf/ssl && \
     chown -R nginx:nginx /usr/local/openresty/nginx/logs/ && \
 
 # link for ease of refs in conf file
     ln -s /usr/local/openresty/nginx/logs/ /var/log/nginx && \
 
     apk --purge -v del py-pip && \
+
+# backup the conf folder 
+    mkdir -p /usr/local/openresty/nginx/conf-bak && \
+    rsync -a /usr/local/openresty/nginx/conf /usr/local/openresty/nginx/conf-bak && \
     rm -rf /var/cache/apk/*
 
 COPY rootfs/. /
@@ -63,4 +68,4 @@ COPY rootfs/. /
 EXPOSE 80 443
 
 # mount to persist configuration, ssl, and purge cache
-VOLUME ["/usr/local/openresty/nginx", "/var/cache/nginx"]
+VOLUME ["/usr/local/openresty/nginx/conf", "/var/cache/nginx"]
