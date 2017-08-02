@@ -27,15 +27,19 @@ sed -i "s/DS_SEO/$DS_SEO/g" conf.d/00-dsweb.inc
 
 # restore backup folder
 if [ ! -f /usr/local/openresty/nginx/conf/nginx.conf ]; then
-	rsync -a /usr/local/openresty/nginx/conf-bak/ /usr/local/openresty/nginx/conf
-
-	# if folder contain instruction to restore from s3 then
+	# if folder has instruction to restore from s3
 	if [ -f /usr/local/openresty/nginx/conf/s3.restore ]; then
+		# only restore if valid path
 		if [[ "$AWS_PATH" != '' ]]; then
 			echo "[i] DSWEB restoring from s3: $AWS_PATH"
-			aws s3 sync "s3://$AWS_PATH/" "/usr/local/openresty/nginx/conf/" --exclude "*logs/*"
-			
-			rm -f /usr/local/openresty/nginx/conf/s3.restore
+
+			# merge with conf-bak
+			aws s3 sync "s3://$AWS_PATH/" "/usr/local/openresty/nginx/conf-bak/" --exclude "*logs/*"
 		fi
+
+		rm -f /usr/local/openresty/nginx/conf/s3.restore
 	fi
+
+	# now restore everything to conf 
+	rsync -a /usr/local/openresty/nginx/conf-bak/ /usr/local/openresty/nginx/conf
 fi
