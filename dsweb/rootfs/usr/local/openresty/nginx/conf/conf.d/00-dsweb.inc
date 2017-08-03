@@ -14,6 +14,14 @@ set_by_lua $hostenv '
     local user_agent   = tostring(ngx.var.http_user_agent)
     local prerender    = ngx.var.prerender
     local gmycb        = ngx.today()
+
+    ngx.header["Server"] = nil
+    ngx.header["X-UA-Compatible"] = "IE=Edge,chrome=1"
+
+    if ngx.re.match(tostring(ngx.var.http_referer), [[(webvisor|trigs)+\\.com]]) == nil then
+        ngx.header["X-Frame-Options"] = "SAMEORIGIN"
+    end
+
     local regex        = [[\\.(\\w{3})\\.brickinc\\.net$]]
     local m            = ngx.re.match(host, regex)
 
@@ -28,6 +36,8 @@ set_by_lua $hostenv '
         ngx.var.gdscontent = string.format("cdn-%s.brickinc.net", hostenv)
 
         gmycb = ngx.utctime()
+        ngx.header["X-Frame-Options"] = nil
+
     else
         -- host with 1 period means no www    
         local _, count = string.gsub(host, "%.", "-")
@@ -39,11 +49,9 @@ set_by_lua $hostenv '
         if string.find(ngx.var.request_uri, "known/acme") ~= nil then
             ngx.var.nowww = 0
         end
+
     end
 
-    if ngx.re.match(tostring(ngx.var.http_referer), [[(webvisor|trigs)+\\.com]]) == nil then
-        ngx.header["X-Frame-Options"] = "SAMEORIGIN"
-    end
 
     regex = "(googlebot|yahoo|bingbot|yandex|yeti|yodaobot|gigabot|ia_archiver|baiduspider|twitterbot|facebookexternalhit|rogerbot|linkedinbot|embedly|quora link preview|showyoubot|outbrain|pinterest|slackbot|vkShare|W3C_Validator)"
     m = ngx.re.match(user_agent, regex)
@@ -57,10 +65,10 @@ set_by_lua $hostenv '
 
     if m or string.find(user_agent, "Prerender") then
         prerender = 0
+        ngx.header["X-Frame-Options"] = nil
+        ngx.header["X-UA-Compatible"] = nil
     end
 
-    ngx.header["Server"] = nil
-    ngx.header["X-UA-Compatible"] = "IE=Edge,chrome=1"
     ngx.var.prerender = prerender
     ngx.var.gmycb = gmycb
     return "."
@@ -88,6 +96,10 @@ location = /404.html {
     root   /usr/local/openresty/nginx/html;
 }
 
+location /.well-known/apple-app-site-association {
+    return 404;
+}
+
 location / {
     include /usr/local/openresty/nginx/conf/conf.d/proxy-hide-headers.inc;
 
@@ -107,7 +119,17 @@ location / {
     proxy_pass         $myurl;
 }
 
-location ~ ^/(script|asset)/(.*) {
+# block access to sensitive files or a php file scan
+location ~* \.(bak|conf|dist|fla|in[ci]|log|psd|sh|sql|sw[op]|php|cgi) {
+    return 404;
+}
+
+# block access to sensitive path scan
+location ~* ^/(cgi-sys|myadmin|wp-admin|sql|db|database|administrator|phpmyadmin\d*|pma\d*|mysql|php-my-admin|phpmanager)/ {
+    return 404;
+}
+
+location ~* ^/(script|asset)/(.*) {
     proxy_cache_valid  20m;
     
     include /usr/local/openresty/nginx/conf/conf.d/proxy-hide-headers.inc;
@@ -120,7 +142,7 @@ location ~ ^/(script|asset)/(.*) {
     proxy_no_cache     $nocache;
 }
 
-location ~ ^/proxy/(.*) {
+location ~* ^/proxy/(.*) {
     proxy_hide_header  "X-AspNet-Version";
     proxy_hide_header  "X-Powered-By";
 
