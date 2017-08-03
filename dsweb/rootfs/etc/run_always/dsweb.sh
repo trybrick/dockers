@@ -10,10 +10,10 @@ rm -rf /var/cache/nginx/site/*
 
 chown -R nginx:nginx /var/cache/nginx
 
-if [[ "$DS_ENV" != "prd" ]]; then
-	DS_ENV = "\-$DS_ENV"
+if [ "$DS_ENV" != "prd" ]; then
+	DS_ENV="\-$DS_ENV"
 else
-	DS_ENV = ""
+	DS_ENV=""
 fi
 
 # handle each env variables
