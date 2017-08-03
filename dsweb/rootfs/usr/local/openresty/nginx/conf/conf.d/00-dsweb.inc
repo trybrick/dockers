@@ -5,12 +5,12 @@ set $gdscontent "DS_CONTENT";
 set $isbrickinc 0;
 set $nocache    0;
 set $disallow   "";
-set $today      "";
+set $gmycb      ""; # cache buster
 
 set_by_lua $genv '
    ngx.header["Server"] = nil
    ngx.header["X-UA-Compatible"] = "IE=Edge,chrome=1"
-   ngx.var.today = ngx.today()
+   ngx.var.gmycb = ngx.today()
    return "."
 ';
 
@@ -30,6 +30,8 @@ if ($host ~* (.*)\.brickinc\.net$ ) {
             ngx.var.gdsapi = string.format("clientapi-%s.brickinc.net", genv)
             ngx.var.gdscontent = string.format("cdn-%s.brickinc.net", genv)
         end
+
+        ngx.var.gmycb = ngx.utctime()
 
         return genv
     ';
@@ -71,7 +73,7 @@ location / {
     }
 
     set $myapi         "$gdsapi";
-    set $myurl         "http://$myapi/api/v1/content/getpage/?cb=$today&scheme=$scheme&host=$host&request_uri=$request_uri";
+    set $myurl         "http://$myapi/api/v1/content/getpage/?cb=$gmycb&scheme=$scheme&host=$host&request_uri=$request_uri";
 
     if ($prerender = 1) {
         set $nocache   1;
