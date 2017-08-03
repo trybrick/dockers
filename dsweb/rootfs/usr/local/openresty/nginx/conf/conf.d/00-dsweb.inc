@@ -1,40 +1,73 @@
 # misc
-set $gdsseo     "DS_SEO";
-set $gdsapi     "DS_API";
-set $gdscontent "DS_CONTENT";
+set $gdsapi     "clientapi-DS_ENV.brickinc.net";
+set $gdscontent "cdn-DS_ENV.brickinc.net";
 set $isbrickinc 0;
 set $nocache    0;
 set $disallow   "";
 set $gmycb      ""; # cache buster
+set $nowww      0;
+set $prerender  0;
 
-set_by_lua $genv '
-   ngx.header["Server"] = nil
-   ngx.header["X-UA-Compatible"] = "IE=Edge,chrome=1"
-   ngx.var.gmycb = ngx.today()
-   return "."
-';
+set_by_lua $hostenv '
+    local hostenv      = "."
+    local host         = ngx.var.host
+    local user_agent   = ngx.var.http_user_agent
+    local prerender    = ngx.var.prerender
+    local gmycb        = ngx.today()
+    local regex        = "\.(\w{3})\.brickinc\.net$"
+    local m            = ngx.re.match(host, regex)
 
-# if host is brickinc
-if ($host ~* (.*)\.brickinc\.net$ ) {
-    set $isbrickinc  1;
-    set $genv        $1;
-    set $nocache     1;
-    set $disallow    "*";
+    if m then
+        hostenv = m[0]
+        ngx.var.nowww = 0
+        ngx.var.isbrickinc = 1
+        ngx.var.nocache = 1
+        ngx.var.disallow = "*"
 
-    set_by_lua $genv '
-        local genv = string.sub(ngx.var.genv, -3)
-        local regex = "(dev|bta|tst|uat|stg)"
-        local m = ngx.re.match(genv, regex)
-        
-        if m then
-            ngx.var.gdsapi = string.format("clientapi-%s.brickinc.net", genv)
-            ngx.var.gdscontent = string.format("cdn-%s.brickinc.net", genv)
+        ngx.var.gdsapi = string.format("clientapi-%s.brickinc.net", hostenv)
+        ngx.var.gdscontent = string.format("cdn-%s.brickinc.net", hostenv)
+
+        gmycb = ngx.utctime()
+    else
+        -- host with 1 period means no www    
+        local _, count = string.gsub(host, "%.", "-")
+        if (count == 1) then
+            ngx.var.nowww = 1
         end
 
-        ngx.var.gmycb = ngx.utctime()
+        -- ignore letsencrypt
+        if (string.find(ngx.var.request_uri, "known/acme") ~= nil then
+            ngx.var.nowww = 0
+        end
+    end
 
-        return genv
-    ';
+    if ngx.re.match(ngx.var.http_referer, "(webvisor|trigs)+\.com") == nil then
+        ngx.header["X-Frame-Options"] = "SAMEORIGIN"
+    end
+
+    regex = "(googlebot|yahoo|bingbot|yandex|yeti|yodaobot|gigabot|ia_archiver|baiduspider|twitterbot|facebookexternalhit|rogerbot|linkedinbot|embedly|quora link preview|showyoubot|outbrain|pinterest|slackbot|vkShare|W3C_Validator)"
+    m = ngx.re.match(user_agent, regex)
+
+    if m or string.find(ngx.var.args, "_escaped_fragment_") then
+        prerender = 1
+    end
+
+    regex = "\.(js|css|xml|less|png|jpg|jpeg|gif|pdf|doc|txt|ico|rss|zip|mp3|rar|exe|wmv|doc|avi|ppt|mpg|mpeg|tif|wav|mov|psd|ai|xls|mp4|m4a|swf|dat|dmg|iso|flv|m4v|torrent|ttf|woff|svg|eot)"
+    m = ngx.re.match(ngx.var.uri, regex)
+
+    if m or string.find(user_agent, "Prerender") then
+        prerender = 0
+    end
+
+    ngx.header["Server"] = nil
+    ngx.header["X-UA-Compatible"] = "IE=Edge,chrome=1"
+    ngx.var.prerender = prerender
+    ngx.var.gmycb = gmycb
+    return "."
+';
+
+if ($nowww = 1) {
+    return 301 $scheme://www.$host$request_uri; 
 }
 
 location /healthcheck {
@@ -57,39 +90,17 @@ location = /404.html {
 
 location / {
     include /usr/local/openresty/nginx/conf/conf.d/proxy-hide-headers.inc;
-    include /usr/local/openresty/nginx/conf/conf.d/00-dsweb-www.inc;
-
-    if ($http_referer !~* "(webvisor\.com|trigs\.com)") {
-        add_header X-Frame-Options "SAMEORIGIN";
-    }
-
-    set $prerender 0;
-    if ($http_user_agent ~* "googlebot|yahoo|bingbot|yandex|yeti|yodaobot|gigabot|ia_archiver|baiduspider|twitterbot|facebookexternalhit|rogerbot|linkedinbot|embedly|quora link preview|showyoubot|outbrain|pinterest|slackbot|vkShare|W3C_Validator") {
-        set $prerender 1;
-    }
-
-    if ($args ~ "_escaped_fragment_") {
-        set $prerender 1;
-    }
-
-    if ($http_user_agent ~ "Prerender") {
-        set $prerender 0;
-    }
-
-    if ($uri ~* "\.(js|css|xml|less|png|jpg|jpeg|gif|pdf|doc|txt|ico|rss|zip|mp3|rar|exe|wmv|doc|avi|ppt|mpg|mpeg|tif|wav|mov|psd|ai|xls|mp4|m4a|swf|dat|dmg|iso|flv|m4v|torrent|ttf|woff|svg|eot)") {
-        set $prerender 0;
-    }
 
     set $myapi         "$gdsapi";
     set $myurl         "http://$myapi/api/v1/content/getpage/?cb=$gmycb&scheme=$scheme&host=$host&request_uri=$request_uri";
 
     if ($prerender = 1) {
         set $nocache   1;
-        set $myapi     "$gdsseo";
+        set $myapi     "ds-seo.brickinc.net";
         set $myurl     "http://$myapi:4001/$scheme://$host$request_uri?";
     }
 
-    proxy_cache_valid  DS_TTL;
+    proxy_cache_valid  20m;
     proxy_set_header   Host $myapi;
     proxy_cache_bypass $nocache;
     proxy_no_cache     $nocache;
@@ -97,7 +108,7 @@ location / {
 }
 
 location ~ ^/(script|asset)/(.*) {
-    proxy_cache_valid  DS_TTL;
+    proxy_cache_valid  20m;
     
     include /usr/local/openresty/nginx/conf/conf.d/proxy-hide-headers.inc;
     

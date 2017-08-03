@@ -10,20 +10,18 @@ rm -rf /var/cache/nginx/site/*
 
 chown -R nginx:nginx /var/cache/nginx
 
+if [[ "$DS_ENV" != "prd" ]]; then
+	DS_ENV = "\-$DS_ENV"
+else
+	DS_ENV = ""
+fi
+
 # handle each env variables
 cd /usr/local/openresty/nginx/conf
-sed -i "s/ DS_RESOLVER;/ $DS_RESOLVER;/g" nginx.conf
-sed -i "s/ DS_TTL;/ $DS_TTL;/g" conf.d/00-dsweb.inc
-sed -i "s/DS_CONTENT/$DS_CONTENT/g" conf.d/00-dsweb.inc
-sed -i "s/DS_API/$DS_API/g" conf.d/00-dsweb.inc
-sed -i "s/DS_SEO/$DS_SEO/g" conf.d/00-dsweb.inc
+sed -i "s/\-DS_ENV\.brickinc/$DS_ENV\.brickinc/g" conf.d/00-dsweb.inc
 
 cd /usr/local/openresty/nginx/conf-bak
-sed -i "s/ DS_RESOLVER;/ $DS_RESOLVER;/g" nginx.conf
-sed -i "s/ DS_TTL;/ $DS_TTL;/g" conf.d/00-dsweb.inc
-sed -i "s/DS_CONTENT/$DS_CONTENT/g" conf.d/00-dsweb.inc
-sed -i "s/DS_API/$DS_API/g" conf.d/00-dsweb.inc
-sed -i "s/DS_SEO/$DS_SEO/g" conf.d/00-dsweb.inc
+sed -i "s/\-DS_ENV\.brickinc/$DS_ENV\.brickinc/g" conf.d/00-dsweb.inc
 
 # restore backup folder
 if [ ! -f /usr/local/openresty/nginx/conf/nginx.conf ]; then

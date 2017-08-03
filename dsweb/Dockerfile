@@ -2,11 +2,7 @@ FROM niiknow/openresty:0.1.3
 
 MAINTAINER noogen <friends@niiknow.org>
 
-ENV DS_API="clientapi-stg.brickinc.net" \
-    DS_SEO="ds-seo.brickinc.net" \
-    DS_CONTENT="cdn-stg.brickinc.net" \
-    DS_RESOLVER="8.8.8.8 4.4.4.4" \
-    DS_TTL="20m" \
+ENV DS_ENV="prd" \
     AWS_DEFAULT_REGION="us-west-2"
 
 ARG LUA_RESTY_AUTO_SSL_VERSION="0.11.0"
