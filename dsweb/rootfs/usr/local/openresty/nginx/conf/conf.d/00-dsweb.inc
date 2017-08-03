@@ -10,11 +10,11 @@ set $prerender  0;
 
 set_by_lua $hostenv '
     local hostenv      = "."
-    local host         = ngx.var.host
-    local user_agent   = ngx.var.http_user_agent
+    local host         = tostring(ngx.var.host)
+    local user_agent   = tostring(ngx.var.http_user_agent)
     local prerender    = ngx.var.prerender
     local gmycb        = ngx.today()
-    local regex        = "\.(\w{3})\.brickinc\.net$"
+    local regex        = [[\\.(\\w{3})\\.brickinc\\.net$]]
     local m            = ngx.re.match(host, regex)
 
     if m then
@@ -36,23 +36,23 @@ set_by_lua $hostenv '
         end
 
         -- ignore letsencrypt
-        if (string.find(ngx.var.request_uri, "known/acme") ~= nil then
+        if string.find(ngx.var.request_uri, "known/acme") ~= nil then
             ngx.var.nowww = 0
         end
     end
 
-    if ngx.re.match(ngx.var.http_referer, "(webvisor|trigs)+\.com") == nil then
+    if ngx.re.match(tostring(ngx.var.http_referer), [[(webvisor|trigs)+\\.com]]) == nil then
         ngx.header["X-Frame-Options"] = "SAMEORIGIN"
     end
 
     regex = "(googlebot|yahoo|bingbot|yandex|yeti|yodaobot|gigabot|ia_archiver|baiduspider|twitterbot|facebookexternalhit|rogerbot|linkedinbot|embedly|quora link preview|showyoubot|outbrain|pinterest|slackbot|vkShare|W3C_Validator)"
     m = ngx.re.match(user_agent, regex)
 
-    if m or string.find(ngx.var.args, "_escaped_fragment_") then
+    if m or string.find(tostring(ngx.var.args), "_escaped_fragment_") then
         prerender = 1
     end
 
-    regex = "\.(js|css|xml|less|png|jpg|jpeg|gif|pdf|doc|txt|ico|rss|zip|mp3|rar|exe|wmv|doc|avi|ppt|mpg|mpeg|tif|wav|mov|psd|ai|xls|mp4|m4a|swf|dat|dmg|iso|flv|m4v|torrent|ttf|woff|svg|eot)"
+    regex = [[\\.(js|css|xml|less|png|jpg|jpeg|gif|pdf|doc|txt|ico|rss|zip|mp3|rar|exe|wmv|doc|avi|ppt|mpg|mpeg|tif|wav|mov|psd|ai|xls|mp4|m4a|swf|dat|dmg|iso|flv|m4v|torrent|ttf|woff|svg|eot)]]
     m = ngx.re.match(ngx.var.uri, regex)
 
     if m or string.find(user_agent, "Prerender") then
@@ -72,7 +72,7 @@ if ($nowww = 1) {
 
 location /healthcheck {
     default_type text/plain;
-	return 200 "OK";
+    return 200 "OK";
 }
 
 location /robots.txt {
@@ -131,3 +131,4 @@ location ~ ^/proxy/(.*) {
     proxy_cache_bypass 1;
     proxy_no_cache     1;
 }
+
