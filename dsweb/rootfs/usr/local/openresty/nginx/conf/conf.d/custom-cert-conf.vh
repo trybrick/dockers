@@ -10,7 +10,7 @@ server {
     #
     error_page  500 502 503 504  /50x.html;
 
-	ssl_certificate /usr/local/openresty/nginx/conf/conf.d/custom.com.crt;
+	ssl_certificate     /usr/local/openresty/nginx/conf/conf.d/custom.com.crt;
 	ssl_certificate_key /usr/local/openresty/nginx/conf/conf.d/custom.com.key;
 
 	include /usr/local/openresty/nginx/conf/conf.d/00-dsweb.inc;
