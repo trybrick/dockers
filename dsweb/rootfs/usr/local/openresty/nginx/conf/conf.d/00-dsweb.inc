@@ -3,12 +3,23 @@ set $gdsseo     "DS_SEO";
 set $gdsapi     "DS_API";
 set $gdscontent "DS_CONTENT";
 set $isbrickinc 0;
-set $genv       ".";
+set $nocache    0;
+set $disallow   "";
+set $today      "";
+
+set_by_lua $genv '
+   ngx.header["Server"] = nil
+   ngx.header["X-UA-Compatible"] = "IE=Edge,chrome=1"
+   ngx.var.today = ngx.today()
+   return "."
+';
 
 # if host is brickinc
 if ($host ~* (.*)\.brickinc\.net$ ) {
     set $isbrickinc  1;
     set $genv        $1;
+    set $nocache     1;
+    set $disallow    "*";
 
     set_by_lua $genv '
         local genv = string.sub(ngx.var.genv, -3)
@@ -27,6 +38,11 @@ if ($host ~* (.*)\.brickinc\.net$ ) {
 location /healthcheck {
     default_type text/plain;
 	return 200 "OK";
+}
+
+location /robots.txt {
+    default_type text/plain;
+    return 200 "User-agent: *\nDisallow: $disallow\n";
 }
 
 location / {
@@ -54,19 +70,19 @@ location / {
         set $prerender 0;
     }
 
-    set_by_lua $today 'return ngx.today()';
-    set $myapi "$gdsapi";
-    set $myurl "http://$myapi/api/v1/content/getpage/?cb=$today&scheme=$scheme&host=$host&request_uri=$request_uri";
+    set $myapi         "$gdsapi";
+    set $myurl         "http://$myapi/api/v1/content/getpage/?cb=$today&scheme=$scheme&host=$host&request_uri=$request_uri";
 
     if ($prerender = 1) {
-        set $myapi "$gdsseo";
-        set $myurl "http://$myapi:4001/$scheme://$host$request_uri?";
+        set $nocache   1;
+        set $myapi     "$gdsseo";
+        set $myurl     "http://$myapi:4001/$scheme://$host$request_uri?";
     }
 
     proxy_cache_valid  DS_TTL;
     proxy_set_header   Host $myapi;
-    proxy_cache_bypass $prerender;
-    proxy_no_cache     $prerender;
+    proxy_cache_bypass $nocache;
+    proxy_no_cache     $nocache;
     proxy_pass         $myurl;
 }
 
@@ -78,33 +94,24 @@ location = /404.html {
     root   /usr/local/openresty/nginx/html;
 }
 
-location ~ ^/asset/(.*) {
-    proxy_cache_valid  DS_TTL;
-
-    include /usr/local/openresty/nginx/conf/conf.d/proxy-hide-headers.inc;
-    
-    set $myurl "$gdscontent";
-    proxy_set_header Host $myurl;
-    proxy_pass http://$myurl;
-}
-
-location ~ ^/script/(.*) {
+location ~ ^/(script|asset)/(.*) {
     proxy_cache_valid  DS_TTL;
     
     include /usr/local/openresty/nginx/conf/conf.d/proxy-hide-headers.inc;
     
-    set $myurl "$gdscontent";
+    set $myurl         "$gdscontent";
     
-    proxy_set_header Host $myurl;
-    proxy_pass http://$myurl;
+    proxy_set_header   Host $myurl;
+    proxy_pass         http://$myurl;
+    proxy_cache_bypass $nocache;
+    proxy_no_cache     $nocache;
 }
 
 location ~ ^/proxy/(.*) {
-    proxy_hide_header           "Server";
-    proxy_hide_header           "X-AspNet-Version";
-    proxy_hide_header           "X-Powered-By";
+    proxy_hide_header  "X-AspNet-Version";
+    proxy_hide_header  "X-Powered-By";
 
-    set $myurl "$gdsapi";
+    set $myurl         "$gdsapi";
 
     proxy_set_header   Host $myurl;
     proxy_pass         http://$myurl/api/v1/$1$is_args$args;
