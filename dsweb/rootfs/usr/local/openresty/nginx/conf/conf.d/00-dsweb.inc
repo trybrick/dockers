@@ -47,6 +47,14 @@ location /robots.txt {
     return 200 "User-agent: *\nDisallow: $disallow\n";
 }
 
+location = /50x.html {
+    root   /usr/local/openresty/nginx/html;
+}
+
+location = /404.html {
+    root   /usr/local/openresty/nginx/html;
+}
+
 location / {
     include /usr/local/openresty/nginx/conf/conf.d/proxy-hide-headers.inc;
     include /usr/local/openresty/nginx/conf/conf.d/00-dsweb-www.inc;
@@ -86,14 +94,6 @@ location / {
     proxy_cache_bypass $nocache;
     proxy_no_cache     $nocache;
     proxy_pass         $myurl;
-}
-
-location = /50x.html {
-    root   /usr/local/openresty/nginx/html;
-}
-
-location = /404.html {
-    root   /usr/local/openresty/nginx/html;
 }
 
 location ~ ^/(script|asset)/(.*) {
