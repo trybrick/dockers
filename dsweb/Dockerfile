@@ -64,4 +64,4 @@ RUN \
 EXPOSE 80 443
 
 # mount to persist configuration, ssl, and purge cache
-VOLUME ["/usr/local/openresty/nginx/conf", "/var/cache/nginx"]
+VOLUME ["/usr/local/openresty/nginx/conf"]
