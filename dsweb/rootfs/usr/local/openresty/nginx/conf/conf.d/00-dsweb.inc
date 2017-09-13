@@ -7,6 +7,7 @@ set $disallow   "";
 set $gmycb      ""; # cache buster
 set $nowww      0;
 set $prerender  0;
+set $invaliduri 0;
 
 set_by_lua $hostenv '
     local hostenv      = "."
@@ -21,6 +22,11 @@ set_by_lua $hostenv '
     if ngx.re.match(tostring(ngx.var.http_referer), [[(webvisor|trigs)+\\.com]]) == nil then
         ngx.header["X-Frame-Options"] = "SAMEORIGIN"
     end
+
+    if ngx.re.match(tostring(ngx.var.uri), [[^[\\w\\-,. _~\\/]+$]]) == nil then
+        ngx.var.invaliduri = 1
+    end
+
 
     local regex        = [[\\.(\\w{3})\\.brickinc\\.net$]]
     local m            = ngx.re.match(host, regex)
@@ -78,6 +84,10 @@ if ($nowww = 1) {
     return 301 $scheme://www.$host$request_uri; 
 }
 
+if ($invaliduri = 1) {
+    return 403;
+}
+
 location /healthcheck {
     default_type text/plain;
     return 200 "OK";
@@ -97,7 +107,7 @@ location = /404.html {
 }
 
 location /.well-known/apple-app-site-association {
-    return 404;
+    return 403;
 }
 
 location / {
@@ -121,12 +131,12 @@ location / {
 
 # block access to sensitive files or a php file scan
 location ~* \.(bak|conf|dist|fla|in[ci]|log|psd|sh|sql|sw[op]|php|cgi) {
-    return 404;
+    return 403;
 }
 
 # block access to sensitive path scan
 location ~* ^/(cgi-sys|myadmin|wp-admin|sql|db|database|administrator|phpmyadmin\d*|pma\d*|mysql|php-my-admin|phpmanager)/ {
-    return 404;
+    return 403;
 }
 
 location ~* ^/(script|asset)/(.*) {
