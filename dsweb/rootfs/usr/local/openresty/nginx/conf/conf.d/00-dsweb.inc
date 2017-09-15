@@ -1,6 +1,6 @@
 # misc
-set $gdsapi     "clientapi-DS_ENV.brickinc.net";
-set $gdscontent "cdn-DS_ENV.brickinc.net";
+set $gdsapi     "clientapi.brickinc.net";
+set $gdscontent "cdn.brickinc.net";
 set $isbrickinc 0;
 set $nocache    0;
 set $disallow   "";
@@ -8,6 +8,9 @@ set $gmycb      ""; # cache buster
 set $nowww      0;
 set $prerender  0;
 set $invaliduri 0;
+set $httpsre    0;
+set $myapi      "";
+set $myurl      "";
 
 set_by_lua $hostenv '
     local hostenv      = "."
@@ -59,7 +62,7 @@ set_by_lua $hostenv '
     end
 
 
-    regex = "(googlebot|yahoo|bingbot|yandex|yeti|yodaobot|gigabot|ia_archiver|baiduspider|twitterbot|facebookexternalhit|rogerbot|linkedinbot|embedly|quora link preview|showyoubot|outbrain|pinterest|slackbot|vkShare|W3C_Validator)"
+    regex = "(Googlebot|yahoo|bingbot|yandex|yeti|yodaobot|gigabot|ia_archiver|baiduspider|twitterbot|facebookexternalhit|rogerbot|linkedinbot|embedly|quora link preview|showyoubot|outbrain|pinterest|slackbot|vkShare|W3C_Validator)"
     m = ngx.re.match(user_agent, regex)
 
     if m or string.find(tostring(ngx.var.args), "_escaped_fragment_") then
@@ -75,13 +78,23 @@ set_by_lua $hostenv '
         ngx.header["X-UA-Compatible"] = nil
     end
 
+    if prerender == 1 and ngx.var.scheme == "http" then
+        ngx.var.httpsre = 1
+    end
+
     ngx.var.prerender = prerender
     ngx.var.gmycb = gmycb
     return "."
 ';
 
+limit_req zone=dsperip burst=600 nodelay;
+
 if ($nowww = 1) {
     return 301 $scheme://www.$host$request_uri; 
+}
+
+if ($httpsre = 1) {
+    return 301 https://$host$request_uri;
 }
 
 if ($invaliduri = 1) {
@@ -111,21 +124,32 @@ location /.well-known/apple-app-site-association {
 }
 
 location / {
-    include /usr/local/openresty/nginx/conf/conf.d/proxy-hide-headers.inc;
-
-    set $myapi         "$gdsapi";
-    set $myurl         "http://$myapi/api/v1/content/getpage/?cb=$gmycb&scheme=$scheme&host=$host&request_uri=$request_uri";
-
     if ($prerender = 1) {
-        set $nocache   1;
         set $myapi     "ds-seo.brickinc.net";
         set $myurl     "http://$myapi:4001/$scheme://$host$request_uri?";
+        rewrite ^ /prerender last;
     }
+
+    set $myapi         "$gdsapi";
+    set $myurl          "http://$myapi/api/v1/content/getpage/?cb=$gmycb&scheme=$scheme&host=$host&request_uri=$request_uri";
+
+    include /usr/local/openresty/nginx/conf/conf.d/proxy-hide-headers.inc;
 
     proxy_cache_valid  20m;
     proxy_set_header   Host $myapi;
     proxy_cache_bypass $nocache;
     proxy_no_cache     $nocache;
+    proxy_pass         $myurl;
+}
+
+location /prerender {
+    internal;
+
+    include /usr/local/openresty/nginx/conf/conf.d/proxy-hide-headers.inc;
+
+    proxy_cache_key    "$request_method$myurl";
+    proxy_cache_valid  2h;
+    proxy_set_header   Host $myapi;
     proxy_pass         $myurl;
 }
 
@@ -137,6 +161,10 @@ location ~* \.(bak|conf|dist|fla|in[ci]|log|psd|sh|sql|sw[op]|php|cgi) {
 # block access to sensitive path scan
 location ~* ^/(cgi-sys|myadmin|wp-admin|sql|db|database|administrator|phpmyadmin\d*|pma\d*|mysql|php-my-admin|phpmanager)/ {
     return 403;
+}
+
+location ~* ^/view/(.*)\.html {
+    return 404;
 }
 
 location ~* ^/(script|asset)/(.*) {
