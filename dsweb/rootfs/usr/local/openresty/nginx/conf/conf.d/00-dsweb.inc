@@ -35,7 +35,7 @@ set_by_lua $hostenv '
     local m            = ngx.re.match(host, regex)
 
     if m then
-        hostenv = m[0]
+        hostenv = string.sub(m[0], 2, 4)
         ngx.var.nowww = 0
         ngx.var.isbrickinc = 1
         ngx.var.nocache = 1
@@ -44,7 +44,7 @@ set_by_lua $hostenv '
         ngx.var.gdsapi = string.format("clientapi-%s.brickinc.net", hostenv)
         ngx.var.gdscontent = string.format("cdn-%s.brickinc.net", hostenv)
 
-        gmycb = ngx.utctime()
+        gmycb = ngx.now()
         ngx.header["X-Frame-Options"] = nil
 
     else
