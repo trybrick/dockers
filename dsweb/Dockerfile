@@ -1,4 +1,4 @@
-FROM niiknow/openresty:0.1.6
+FROM niiknow/openresty:0.1.7
 
 MAINTAINER noogen <friends@niiknow.org>
 
@@ -45,6 +45,7 @@ RUN \
       -keyout /usr/local/openresty/nginx/conf/ssl/resty-auto-ssl-fallback.key \
       -out /usr/local/openresty/nginx/conf/ssl/resty-auto-ssl-fallback.crt && \
 
+    openssl dhparam -out /usr/local/openresty/nginx/conf/ssl/dhparam.pem 2048 && \
     chown -R nginx:nginx /usr/local/openresty/nginx/conf/ssl && \
     chown -R nginx:nginx /usr/local/openresty/nginx/logs/ && \
 

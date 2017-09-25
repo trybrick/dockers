@@ -16,3 +16,4 @@ proxy_hide_header           "cf-ray";
 proxy_hide_header           "X-AspNet-Version";
 proxy_hide_header           "X-Powered-By";
 proxy_hide_header           "Server";
+proxy_hide_header           "Set-Cookie";
