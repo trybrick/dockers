@@ -9,8 +9,10 @@
         
         proxy_cache_key              hannaford$uri$is_args$args;
         proxy_set_header             Host "hannaford.gsnrecipes.com";
-        proxy_ignore_headers         "Set-Cookie";
-        proxy_hide_header            "Set-Cookie"; 
+        proxy_ignore_headers         Set-Cookie;
+        proxy_ignore_headers         Vary;
+        proxy_ignore_headers         Expires;
+        proxy_ignore_headers         Cache-Control;
 
         include                      conf.d/proxy-hide-headers.inc;
 
@@ -19,9 +21,6 @@
         proxy_hide_header            access-control-allow-origin;
         add_header                   Access-Control-Allow-Origin "*";
 
-        proxy_ignore_headers         Vary;
-        proxy_ignore_headers         Expires;
-        proxy_ignore_headers         Cache-Control;
 
         proxy_pass                   http://$backend$request_uri;
         proxy_cache                  my_diskcached;

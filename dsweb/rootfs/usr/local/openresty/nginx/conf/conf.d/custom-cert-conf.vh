@@ -4,9 +4,9 @@ server {
     listen 443 ssl;
     server_name custom.com www.custom.com;
 
-    ssl_certificate /usr/local/openresty/nginx/conf/conf.d/custom.com.crt;
-    ssl_certificate_key /usr/local/openresty/nginx/conf/conf.d/custom.com.key;
+    ssl_certificate      	conf.d/custom.com.crt;
+    ssl_certificate_key  	conf.d/custom.com.key;
 
-    include /usr/local/openresty/nginx/conf/conf.d/00-dsweb.inc;
-    include /usr/local/openresty/nginx/conf/conf.d/00-dsweb-legacy.inc;
+    include              	conf.d/00-dsweb.inc;
+    include 				conf.d/00-dsweb-legacy.inc;
 }

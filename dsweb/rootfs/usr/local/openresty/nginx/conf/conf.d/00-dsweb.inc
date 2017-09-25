@@ -1,6 +1,6 @@
 # misc
-set $gdsapi     "clientapi.brickinc.net";
-set $gdscontent "cdn.brickinc.net";
+set $gdsapi     "clientapi-DS_ENV.brickinc.net";
+set $gdscontent "cdn-DS_ENV.brickinc.net";
 set $isbrickinc 0;
 set $nocache    0;
 set $disallow   "";
@@ -131,9 +131,9 @@ location / {
     }
 
     set $myapi         "$gdsapi";
-    set $myurl          "http://$myapi/api/v1/content/getpage/?cb=$gmycb&scheme=$scheme&host=$host&request_uri=$request_uri";
+    set $myurl         "http://$myapi/api/v1/content/getpage/?cb=$gmycb&scheme=$scheme&host=$host&request_uri=$request_uri";
 
-    include /usr/local/openresty/nginx/conf/conf.d/proxy-hide-headers.inc;
+    include            conf.d/proxy-hide-headers.inc;
 
     proxy_cache_valid  20m;
     proxy_set_header   Host $myapi;
@@ -145,7 +145,7 @@ location / {
 location /prerender {
     internal;
 
-    include /usr/local/openresty/nginx/conf/conf.d/proxy-hide-headers.inc;
+    include            conf.d/proxy-hide-headers.inc;
 
     proxy_cache_key    "$request_method$myurl";
     proxy_cache_valid  2h;
@@ -170,7 +170,7 @@ location ~* ^/view/(.*)\.html {
 location ~* ^/(script|asset)/(.*) {
     proxy_cache_valid  20m;
     
-    include /usr/local/openresty/nginx/conf/conf.d/proxy-hide-headers.inc;
+    include            conf.d/proxy-hide-headers.inc;
     
     set $myurl         "$gdscontent";
     
