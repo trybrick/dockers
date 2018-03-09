@@ -1,4 +1,4 @@
-FROM niiknow/openresty:0.1.7
+FROM niiknow/openresty:0.1.8
 
 MAINTAINER noogen <friends@niiknow.org>
 
