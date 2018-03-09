@@ -5,7 +5,7 @@ MAINTAINER noogen <friends@niiknow.org>
 ENV DS_ENV="prd" \
     AWS_DEFAULT_REGION="us-west-2"
 
-ARG LUA_RESTY_AUTO_SSL_VERSION="0.11.0"
+ARG LUA_RESTY_AUTO_SSL_VERSION="0.12.0"
 
 RUN \
   # Make info file about this build
