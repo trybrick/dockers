@@ -4,4 +4,5 @@
 /usr/local/openresty/bin/openresty -s reload
 
 # delete anything older than 12 hours
-find /var/cache/nginx/site/* -daystart -maxdepth 1 -mmin +720 -type f -exec rm -f {} \;
+find /var/cache/nginx/site/* -mmin +720 -type f -exec rm -f {} \;
+find /var/cache/nginx/disk/* -mmin +720 -type f -exec rm -f {} \;

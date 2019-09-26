@@ -20,12 +20,11 @@ RUN cd /tmp \
       openssl \
       nano \
       less \
-      python \
-      py-pip \
+      python3 \
       rsync \
       sed && \
-    pip install --upgrade pip && \
-    pip install awscli && \
+    pip3 install --upgrade pip && \
+    pip3 install awscli && \
     if [ -L /usr/bin/pkill ]; then rm /usr/bin/pkill; fi && \
     luarocks install lua-resty-http && \
     luarocks install lua-resty-auto-ssl $LUA_RESTY_AUTO_SSL_VERSION && \
