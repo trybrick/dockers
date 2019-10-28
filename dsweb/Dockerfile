@@ -8,7 +8,7 @@ ENV DS_ENV="prd" \
     USER="root"
 USER root
 WORKDIR /root
-ARG LUA_RESTY_AUTO_SSL_VERSION="0.13.0"
+ARG LUA_RESTY_AUTO_SSL_VERSION="0.13.1"
 RUN cd /tmp \
     printf "Build of brickinc/dsweb, date: %s\n"  `date -u +"%Y-%m-%dT%H:%M:%SZ"` >> /etc/BUILDS/zz-dsweb && \
     apk add --no-cache \
